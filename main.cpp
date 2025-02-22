@@ -1,19 +1,11 @@
 #include "Snake.hpp"
-
-#define WALL '#'
-#define SPACE ' '
-#define HEAD1 'o'
-#define HEAD2 'O'
-#define BODY '*'
+#include "Settings.hpp"
 
 bool gameOver = false;
-const int width = 50;
-const int height = 20;
-int fruitX, fruitY;
-bool hasFruit = false;
 
-Snake *s1 = new Snake(5, 10, N);
-Snake *s2 = new Snake(15, 10, N);
+Snake *s1 = new Snake(5, 10, HEAD1, BODY);
+Snake *s2 = new Snake(15, 10, HEAD2, BODY);
+Fruit *f1 = new Fruit();
 
 void Setup()
 {
@@ -22,7 +14,7 @@ void Setup()
 	noecho();			   // don't echo input
 	keypad(stdscr, TRUE);  // enable special keys
 	nodelay(stdscr, TRUE); // getch() won't wait for player input
-
+	
 	srand(time(NULL));
 }
 
@@ -34,31 +26,30 @@ void Draw()
 	{
 		for (int y = 0; y < height; y++)
 		{
+			mvaddch(y, x, SPACE);
+
+			// draw walls
 			if (x == 0 || x == width - 1 || y == 0 || y == height - 1)
-				mvaddch(y, x, WALL); // Walls
-			else if (s1->isHead(x, y))
-				mvaddch(y, x, HEAD1); // Snake head
-			else if (s1->isBody(x, y))
-				mvaddch(y, x, BODY);
+				mvaddch(y, x, WALL);
 
-			else if (s2->isHead(x, y))
-				mvaddch(y, x, HEAD2);
-			else if (s2->isBody(x, y))
-				mvaddch(y, x, BODY);
+			// draw s1
+			if (s1->isHead(x, y))
+				mvaddch(y, x, s1->getHeadChar());
+			if (s1->isBody(x, y))
+				mvaddch(y, x, s1->getBodyChar());
 
-			else
-				mvaddch(y, x, SPACE);
+			// draw s2
+			if (s2->isHead(x, y))
+				mvaddch(y, x, s2->getHeadChar());
+			if (s2->isBody(x, y))
+				mvaddch(y, x, s2->getBodyChar());
+
+			// draw fruit
+			if (f1->isFruit(x, y))
+				mvaddch(y, x, FRUIT);
+
 		}
 	}
-
-	// if (!hasFruit)
-	// {
-	// 	int x = rand() % width;
-	// 	int y = rand() % height;
-
-	// 	mvaddch(y, x, '&');
-	// 	hasFruit = true;
-	// }
 
 	printw("\n\nP1 score: %d", s1->getScore());
 	printw("\nP2 score: %d", s2->getScore());
@@ -91,22 +82,36 @@ void Logic()
 		End();
 	if (s2_x <= 0 || s2_x >= width - 1 || s2_y <= 0 || s2_y >= height - 1)
 		End();
-	
-	// collision with each other bodies
-	if (s1->isBody(s2_x, s2_y) || s2->isBody(s1_x, s1_y))
+
+	// collision with each other head or bodies
+	if (s1->isHead(s2_x, s2_y) || s1->isBody(s2_x, s2_y) || s2->isHead(s1_x, s1_y) || s2->isBody(s1_x, s1_y))
 		End();
-	
+
 	// collision with own bodies
-	if ((s1->isBody(s1_x, s1_y) && !s1->isHead(s1_x, s1_y)) 
-		|| (s2->isBody(s2_x, s2_y) && !s2->isHead(s2_x, s2_y)))
+	if (s1->isBody(s1_x, s1_y) || s2->isBody(s2_x, s2_y))
 		End();
+
+	// collision with fruit
+	if (f1->isFruit(s1_x, s1_y))
+	{
+		s1->eat();
+		delete f1;
+		f1 = new Fruit();
+	}
+
+	if (f1->isFruit(s2_x, s2_y))
+	{
+		s2->eat();
+		delete f1;
+		f1 = new Fruit();
+	}
 }
 
 void Input()
 {
 	int ch = getch();
 	if (ch == ERR) return ;
-
+	
 	switch(ch)		// get ascii char of key
 	{
 		case 'a':
@@ -122,15 +127,6 @@ void Input()
 			s2->setDirection(RIGHT);
 			break;
 	}
-
-	// if (!hasFruit)
-	// {
-	// 	int x = rand() % width;
-	// 	int y = rand() % height;
-
-	// 	mvaddch(y, x, '&');
-	// 	hasFruit = true;
-	// }
 }
 
 void Move()
@@ -148,7 +144,7 @@ int main()
 		Input();
 		Move();
 		Logic();
-		napms(250);
+		napms(refreshRate);
 		refresh();
 	}
 	endwin();

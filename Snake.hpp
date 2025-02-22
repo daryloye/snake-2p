@@ -1,10 +1,7 @@
 #ifndef SNAKE_HPP
 #define SNAKE_HPP
 
-#include <iostream>
-#include <unistd.h>
-#include <ncurses.h>
-#include <deque>
+# include "Settings.hpp"
 
 enum Direction
 {
@@ -16,6 +13,23 @@ enum Direction
 
 const int LEFT = -1;
 const int RIGHT = +1;
+
+class Fruit
+{
+	private:
+		int _posX, _posY;
+	
+	public:
+		Fruit() {
+			_posX = rand() % (width - 2) + 1;
+			_posY = rand() % (height - 2) + 1;
+		};
+
+		bool isFruit(int x, int y) { return (x == _posX && y == _posY); };
+
+		int getPositionX() { return _posX; };
+		int getPositionY() { return _posY; };
+};
 
 class Body
 {
@@ -42,15 +56,15 @@ class Body
 class Snake
 {
 	private:
-		int _direction;
+		int _direction = N;
 		int _score = 0;
+		char _headChar, _bodyChar;
 		std::deque<Body*> _body;
 
 	public:
-		Snake(int startX, int startY, int startDirection)
-			: _direction(startDirection) {
-			
-			// TODO: create body based on start direction
+		Snake(int startX, int startY, char headChar, char bodyChar)
+			: _headChar(headChar), _bodyChar(bodyChar) {
+
 			_body.push_back(new Body(startX, startY, true));
 			_body.push_back(new Body(startX, startY + 1, false));
 			_body.push_back(new Body(startX, startY + 2, false));
@@ -65,7 +79,7 @@ class Snake
 			};
 		
 		bool isBody(int x, int y) {
-			for (std::deque<Body *>::const_iterator iter = _body.begin();
+			for (std::deque<Body*>::const_iterator iter = _body.begin() + 1;
 				iter != _body.end(); ++iter)
 			{
 				if ( x == (*iter)->getPositionX() && y == (*iter)->getPositionY())
@@ -77,7 +91,7 @@ class Snake
 		void move()
 		{
 			// move the other body parts up
-			for (std::deque<Body *>::const_iterator iter = _body.end() - 1;
+			for (std::deque<Body*>::const_iterator iter = _body.end() - 1;
 				iter != _body.begin(); iter--)
 			{
 				(*iter)->setPositionX((*(iter - 1))->getPositionX());
@@ -102,24 +116,21 @@ class Snake
 			}
 		};
 
-		// TODO: handle fruit
 		void eat() {
-
-			// create a new tail at the end
-			_body.push_back(new Body(
-				_body.back()->getPositionX(),
-				_body.back()->getPositionY(),
-				false
-				)
-			);
-
-			increaseScore();
+			int newBodyPositionX = _body.back()->getPositionX();
+			int newBodyPositionY = _body.back()->getPositionY();
+			
+			move();
+			_body.push_back(new Body(newBodyPositionX, newBodyPositionY, false));
+			_score++;
 		}
+
+		char getHeadChar() { return _headChar; };
+		char getBodyChar() { return _bodyChar; };
 
 		void setDirection(int key) { _direction = (_direction + key + 4) % 4; };
 		int getDirection() { return _direction; };
 
-		void increaseScore() { _score++; };
 		int getScore() { return _score; };
 
 		int getHeadPositionX() { return _body.front()->getPositionX(); };
