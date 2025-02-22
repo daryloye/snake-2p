@@ -2,28 +2,24 @@ NAME = snake
 
 CC = c++
 
-CFLAGS = -Wall -Wextra -Werror -ggdb3 -O0 -std=c++98 -lm `sdl2-config --cflags`
+CXXFLAGS = -Wall -Wextra -Werror
 
-LDFLAGS = `sdl2-config --libs` -lSDL2_mixer -lSDL2_image -lSDL2_ttf
+SRC = ./main.cpp
 
-SRC =	./main.cpp	
-
-OBJECTS = $(SRC:.cpp=.o)
+OBJ = $(SRC:.cpp=.o)
 
 all: $(NAME)
 
-$(NAME): $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) -o $(NAME) $(LDFLAGS)
+$(NAME): $(OBJ)
+		   $(CC) $(CXXFLAGS) $(OBJ) -o $(NAME) -lncurses
 
 %.o: %.cpp
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJECTS)
+	rm -f $(OBJ)
 
 fclean: clean
 	rm -f $(NAME)
 
 re: fclean all
-
-.PHONY: all clean fclean re

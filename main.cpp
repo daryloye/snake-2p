@@ -1,138 +1,160 @@
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
-#include <SDL2/SDL_timer.h>
- 
+#include "Snake.hpp"
+
+#define WALL '#'
+#define SPACE ' '
+#define HEAD1 'o'
+#define HEAD2 'O'
+#define BODY '*'
+
+bool gameOver = false;
+const int width = 50;
+const int height = 20;
+int fruitX, fruitY;
+bool hasFruit = false;
+
+Snake *s1 = new Snake(5, 10, N);
+Snake *s2 = new Snake(15, 10, N);
+
+void Setup()
+{
+	initscr();			   // initialise screen
+	cbreak();			   // disable line buffering, player don't need to press ENTER to input
+	noecho();			   // don't echo input
+	keypad(stdscr, TRUE);  // enable special keys
+	nodelay(stdscr, TRUE); // getch() won't wait for player input
+
+	srand(time(NULL));
+}
+
+void Draw()
+{
+	clear();
+
+	for (int x = 0; x < width; x++)
+	{
+		for (int y = 0; y < height; y++)
+		{
+			if (x == 0 || x == width - 1 || y == 0 || y == height - 1)
+				mvaddch(y, x, WALL); // Walls
+			else if (s1->isHead(x, y))
+				mvaddch(y, x, HEAD1); // Snake head
+			else if (s1->isBody(x, y))
+				mvaddch(y, x, BODY);
+
+			else if (s2->isHead(x, y))
+				mvaddch(y, x, HEAD2);
+			else if (s2->isBody(x, y))
+				mvaddch(y, x, BODY);
+
+			else
+				mvaddch(y, x, SPACE);
+		}
+	}
+
+	// if (!hasFruit)
+	// {
+	// 	int x = rand() % width;
+	// 	int y = rand() % height;
+
+	// 	mvaddch(y, x, '&');
+	// 	hasFruit = true;
+	// }
+
+	printw("\n\nP1 score: %d", s1->getScore());
+	printw("\nP2 score: %d", s2->getScore());
+}
+
+void End()
+{
+	int s1_score = s1->getScore();
+	int s2_score = s2->getScore();
+
+	if (s1_score > s2_score)
+		printw("\n\nPLAYER 1 WINS!");
+	else if (s2_score > s1_score)
+		printw("\n\nPLAYER 2 WINS!");
+	else
+		printw("\n\nTIE!");
+	refresh();
+	pause();
+}
+
+void Logic()
+{
+	int s1_x = s1->getHeadPositionX();
+	int s1_y = s1->getHeadPositionY();
+	int s2_x = s2->getHeadPositionX();
+	int s2_y = s2->getHeadPositionY();
+
+	// wall collisions
+	if (s1_x <= 0 || s1_x >= width - 1 || s1_y <= 0 || s1_y >= height - 1)
+		End();
+	if (s2_x <= 0 || s2_x >= width - 1 || s2_y <= 0 || s2_y >= height - 1)
+		End();
+	
+	// collision with each other bodies
+	if (s1->isBody(s2_x, s2_y) || s2->isBody(s1_x, s1_y))
+		End();
+	
+	// collision with own bodies
+	if ((s1->isBody(s1_x, s1_y) && !s1->isHead(s1_x, s1_y)) 
+		|| (s2->isBody(s2_x, s2_y) && !s2->isHead(s2_x, s2_y)))
+		End();
+}
+
+void Input()
+{
+	int ch = getch();
+	if (ch == ERR) return ;
+
+	switch(ch)		// get ascii char of key
+	{
+		case 'a':
+			s1->setDirection(LEFT);
+			break;
+		case 'd':
+			s1->setDirection(RIGHT);
+			break;
+		case KEY_LEFT:
+			s2->setDirection(LEFT);
+			break;
+		case KEY_RIGHT:
+			s2->setDirection(RIGHT);
+			break;
+	}
+
+	// if (!hasFruit)
+	// {
+	// 	int x = rand() % width;
+	// 	int y = rand() % height;
+
+	// 	mvaddch(y, x, '&');
+	// 	hasFruit = true;
+	// }
+}
+
+void Move()
+{
+	s1->move();
+	s2->move();
+}
+
 int main()
 {
- 
-    // returns zero on success else non-zero
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-        printf("error initializing SDL: %s\n", SDL_GetError());
-    }
-    SDL_Window* win = SDL_CreateWindow("GAME", // creates a window
-                                       SDL_WINDOWPOS_CENTERED,
-                                       SDL_WINDOWPOS_CENTERED,
-                                       1000, 1000, 0);
- 
-    // triggers the program that controls
-    // your graphics hardware and sets flags
-    Uint32 render_flags = SDL_RENDERER_ACCELERATED;
- 
-    // creates a renderer to render our images
-    SDL_Renderer* rend = SDL_CreateRenderer(win, -1, render_flags);
- 
-    // creates a surface to load an image into the main memory
-    SDL_Surface* surface;
- 
-    // please provide a path for your image
-    surface = IMG_Load("./ss.png");
- 
-    // loads image to our graphics hardware memory.
-    SDL_Texture* tex = SDL_CreateTextureFromSurface(rend, surface);
- 
-    // clears main-memory
-    SDL_FreeSurface(surface);
- 
-    // let us control our image position
-    // so that we can move it with our keyboard.
-    SDL_Rect dest;
- 
-    // connects our texture with dest to control position
-    SDL_QueryTexture(tex, NULL, NULL, &dest.w, &dest.h);
- 
-    // adjust height and width of our image box.
-    dest.w /= 6;
-    dest.h /= 6;
- 
-    // sets initial x-position of object
-    dest.x = (1000 - dest.w) / 2;
- 
-    // sets initial y-position of object
-    dest.y = (1000 - dest.h) / 2;
- 
-    // controls animation loop
-    int close = 0;
- 
-    // speed of box
-    int speed = 300;
- 
-    // animation loop
-    while (!close) {
-        SDL_Event event;
- 
-        // Events management
-        while (SDL_PollEvent(&event)) {
-            switch (event.type) {
- 
-            case SDL_QUIT:
-                // handling of close button
-                close = 1;
-                break;
- 
-            case SDL_KEYDOWN:
-                // keyboard API for key pressed
-                switch (event.key.keysym.scancode) {
-                case SDL_SCANCODE_W:
-                case SDL_SCANCODE_UP:
-                    dest.y -= speed / 30;
-                    break;
-                case SDL_SCANCODE_A:
-                case SDL_SCANCODE_LEFT:
-                    dest.x -= speed / 30;
-                    break;
-                case SDL_SCANCODE_S:
-                case SDL_SCANCODE_DOWN:
-                    dest.y += speed / 30;
-                    break;
-                case SDL_SCANCODE_D:
-                case SDL_SCANCODE_RIGHT:
-                    dest.x += speed / 30;
-                    break;
-                default:
-                    break;
-                }
-            }
-        }
- 
-        // right boundary
-        if (dest.x + dest.w > 1000)
-            dest.x = 1000 - dest.w;
- 
-        // left boundary
-        if (dest.x < 0)
-            dest.x = 0;
- 
-        // bottom boundary
-        if (dest.y + dest.h > 1000)
-            dest.y = 1000 - dest.h;
- 
-        // upper boundary
-        if (dest.y < 0)
-            dest.y = 0;
- 
-        // clears the screen
-        SDL_RenderClear(rend);
-        SDL_RenderCopy(rend, tex, NULL, &dest);
- 
-        // triggers the double buffers
-        // for multiple rendering
-        SDL_RenderPresent(rend);
- 
-        // calculates to 60 fps
-        SDL_Delay(1000 / 60);
-    }
- 
-    // destroy texture
-    SDL_DestroyTexture(tex);
- 
-    // destroy renderer
-    SDL_DestroyRenderer(rend);
- 
-    // destroy window
-    SDL_DestroyWindow(win);
-     
-    // close SDL
-    SDL_Quit();
- 
-    return 0;
+	Setup();
+	while (!gameOver)
+	{
+		Draw();
+		Input();
+		Move();
+		Logic();
+		napms(250);
+		refresh();
+	}
+	endwin();
+
+	delete s1;
+	delete s2;
+	
+	return 0;
 }
