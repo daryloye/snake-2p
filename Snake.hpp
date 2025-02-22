@@ -35,10 +35,9 @@ class Body
 {
 	private:
 		int _posX, _posY;
-		bool _isHead;
 
 	public:
-		Body(int posX, int posY, int isHead): _posX(posX), _posY(posY), _isHead(isHead) {};
+		Body(int posX, int posY): _posX(posX), _posY(posY) {};
 
 		void setPositionX(int x) { _posX = x; };
 		void setPositionY(int y) { _posY = y; };
@@ -65,10 +64,10 @@ class Snake
 		Snake(int startX, int startY, char headChar, char bodyChar)
 			: _headChar(headChar), _bodyChar(bodyChar) {
 
-			_body.push_back(new Body(startX, startY, true));
-			_body.push_back(new Body(startX, startY + 1, false));
-			_body.push_back(new Body(startX, startY + 2, false));
-			_body.push_back(new Body(startX, startY + 3, false));
+			_body.push_back(new Body(startX, startY));
+			_body.push_back(new Body(startX, startY + 1));
+			_body.push_back(new Body(startX, startY + 2));
+			_body.push_back(new Body(startX, startY + 3));
 		};
 
 		bool isHead(int x, int y) { 
@@ -121,7 +120,7 @@ class Snake
 			int newBodyPositionY = _body.back()->getPositionY();
 			
 			move();
-			_body.push_back(new Body(newBodyPositionX, newBodyPositionY, false));
+			_body.push_back(new Body(newBodyPositionX, newBodyPositionY));
 			_score++;
 		}
 
