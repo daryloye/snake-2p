@@ -169,8 +169,5 @@ int main()
 	delete s2;
 	delete f1;
 
-	std::cout << std::endl;
-	std::cout.flush();
-	
 	return 0;
 }
