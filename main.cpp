@@ -66,8 +66,24 @@ void End()
 		printw("\n\nPLAYER 2 WINS!");
 	else
 		printw("\n\nTIE!");
+	
 	refresh();
-	pause();
+	gameOver = true;
+	napms(2000);
+}
+
+void generateNewFruit()
+{
+	do {
+		delete f1;
+		f1 = new Fruit();
+	}
+	while (
+		(s1->isBody(f1->getPositionX(), f1->getPositionY()))
+		|| (s1->isHead(f1->getPositionX(), f1->getPositionY()))
+		|| (s2->isBody(f1->getPositionX(), f1->getPositionY()))
+		|| (s2->isHead(f1->getPositionX(), f1->getPositionY()))
+	);
 }
 
 void Logic()
@@ -151,6 +167,10 @@ int main()
 
 	delete s1;
 	delete s2;
+	delete f1;
+
+	std::cout << std::endl;
+	std::cout.flush();
 	
 	return 0;
 }

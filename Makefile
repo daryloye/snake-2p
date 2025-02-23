@@ -2,7 +2,7 @@ NAME = snake
 
 CC = c++
 
-CXXFLAGS = -Wall -Wextra -Werror
+CXXFLAGS = -Wall -Werror -Wextra
 
 SRC = ./main.cpp
 
