@@ -1,6 +1,6 @@
 **2 Player Snake Game in Terminal**
 
-- Coded in C++
+- Coded in C++ using the ncurses library
 - To build, run `make re` and then `./snake`
 
 - Controls:
